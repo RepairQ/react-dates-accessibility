@@ -115,6 +115,7 @@ const propTypes = forbidExtraProps({
   // accessibility props
   isFocused: PropTypes.bool,
   getFirstFocusableDay: PropTypes.func,
+  onFocus: PropTypes.func,
   onBlur: PropTypes.func,
   showKeyboardShortcuts: PropTypes.bool,
   onTab: PropTypes.func,
@@ -185,6 +186,7 @@ export const defaultProps = {
   // accessibility props
   isFocused: false,
   getFirstFocusableDay: null,
+  onFocus() {},
   onBlur() {},
   showKeyboardShortcuts: false,
   onTab() {},
@@ -224,6 +226,7 @@ class DayPicker extends React.PureComponent {
       calendarMonthWidth: getCalendarMonthWidth(props.daySize, horizontalMonthPadding),
       focusedDate: (!props.hidden || props.isFocused) ? focusedDate : null,
       nextFocusedDate: null,
+      preventFocusDate: false,
       showKeyboardShortcuts: props.showKeyboardShortcuts,
       onKeyboardShortcutsPanelClose() {},
       isTouchDevice: isTouchDevice(),
@@ -472,11 +475,13 @@ class DayPicker extends React.PureComponent {
     switch (e.key) {
       case 'ArrowUp':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.subtract(1, 'week');
         didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         break;
       case 'ArrowLeft':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         if (isRTL) {
           newFocusedDate.add(1, 'day');
           didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
@@ -487,22 +492,26 @@ class DayPicker extends React.PureComponent {
         break;
       case 'Home':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.startOf('week').hour(12);
         didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         break;
       case 'PageUp':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.subtract(1, 'month');
         didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         break;
 
       case 'ArrowDown':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.add(1, 'week');
         didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         break;
       case 'ArrowRight':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         if (isRTL) {
           newFocusedDate.subtract(1, 'day');
           didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
@@ -513,11 +522,13 @@ class DayPicker extends React.PureComponent {
         break;
       case 'End':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.endOf('week');
         didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         break;
       case 'PageDown':
         e.preventDefault();
+        this.setState({ preventFocusDate: false });
         newFocusedDate.add(1, 'month');
         didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         break;
@@ -558,6 +569,7 @@ class DayPicker extends React.PureComponent {
 
   onPrevMonthClick(e) {
     if (e) e.preventDefault();
+    this.setState({ preventFocusDate: true });
     this.onPrevMonthTransition();
   }
 
@@ -600,6 +612,7 @@ class DayPicker extends React.PureComponent {
       translationValue: 0.00001,
       focusedDate: null,
       nextFocusedDate: currentMonth,
+      preventFocusDate: true,
       currentMonth,
     });
   }
@@ -615,12 +628,14 @@ class DayPicker extends React.PureComponent {
       translationValue: 0.0001,
       focusedDate: null,
       nextFocusedDate: currentMonth,
+      preventFocusDate: true,
       currentMonth,
     });
   }
 
   onNextMonthClick(e) {
     if (e) e.preventDefault();
+    this.setState({ preventFocusDate: true });
     this.onNextMonthTransition();
   }
 
@@ -906,6 +921,7 @@ class DayPicker extends React.PureComponent {
     this.setState({
       showKeyboardShortcuts: true,
       onKeyboardShortcutsPanelClose: onCloseCallBack,
+      preventFocusDate: true,
     });
   }
 
@@ -919,6 +935,7 @@ class DayPicker extends React.PureComponent {
     this.setState({
       onKeyboardShortcutsPanelClose: null,
       showKeyboardShortcuts: false,
+      preventFocusDate: false,
     });
   }
 
@@ -1038,6 +1055,7 @@ class DayPicker extends React.PureComponent {
       translationValue,
       scrollableMonthMultiple,
       focusedDate,
+      preventFocusDate,
       showKeyboardShortcuts,
       isTouchDevice: isTouch,
       hasSetHeight,
@@ -1080,6 +1098,7 @@ class DayPicker extends React.PureComponent {
       verticalBorderSpacing,
       horizontalMonthPadding,
       navPosition,
+      onFocus,
     } = this.props;
 
     const { reactDates: { spacing: { dayPickerHorizontalPadding } } } = theme;
@@ -1104,7 +1123,7 @@ class DayPicker extends React.PureComponent {
 
     const isCalendarMonthGridAnimating = monthTransition !== null;
 
-    const shouldFocusDate = !isCalendarMonthGridAnimating && isFocused;
+    const shouldFocusDate = !preventFocusDate && !isCalendarMonthGridAnimating && isFocused;
 
     let keyboardShortcutButtonLocation = BOTTOM_RIGHT;
     if (this.isVertical()) {
@@ -1195,6 +1214,7 @@ class DayPicker extends React.PureComponent {
               onClick={(e) => { e.stopPropagation(); }}
               onKeyDown={this.onKeyDown}
               onMouseUp={() => { this.setState({ withMouseInteractions: true }); }}
+              onFocus={onFocus}
               tabIndex={-1}
               role="application"
               aria-roledescription={phrases.roleDescription}
