@@ -1,11 +1,12 @@
 import React from 'react';
 import moment from 'moment';
-import { css, withStyles, withStylesPropTypes } from 'react-with-styles';
+import { withStyles, withStylesPropTypes } from 'react-with-styles';
 import { Portal } from 'react-portal';
 import { forbidExtraProps } from 'airbnb-prop-types';
 import { addEventListener } from 'consolidated-events';
 import isTouchDevice from 'is-touch-device';
 import OutsideClickHandler from 'react-outside-click-handler';
+import { darken } from 'color2k';
 
 import DateRangePickerShape from '../shapes/DateRangePickerShape';
 import { DateRangePickerPhrases } from '../defaultPhrases';
@@ -54,6 +55,8 @@ const defaultProps = {
   endDatePlaceholderText: 'End Date',
   startDateAriaLabel: undefined,
   endDateAriaLabel: undefined,
+  startDateTitleText: undefined,
+  endDateTitleText: undefined,
   startDateOffset: undefined,
   endDateOffset: undefined,
   disabled: false,
@@ -96,6 +99,7 @@ const defaultProps = {
   verticalHeight: null,
   transitionDuration: undefined,
   verticalSpacing: DEFAULT_VERTICAL_SPACING,
+  autoComplete: 'off',
   horizontalMonthPadding: undefined,
 
   // navigation related props
@@ -446,8 +450,10 @@ class DateRangePicker extends React.PureComponent {
       dayAriaLabelFormat,
       isRTL,
       weekDayFormat,
+      css,
       styles,
       verticalHeight,
+      noBorder,
       transitionDuration,
       verticalSpacing,
       horizontalMonthPadding,
@@ -477,6 +483,7 @@ class DateRangePicker extends React.PureComponent {
     /* eslint-disable jsx-a11y/click-events-have-key-events */
     return (
       <div
+        key="day-picker"
         ref={this.setDayPickerContainerRef}
         {...css(
           styles.DateRangePicker_picker,
@@ -546,6 +553,7 @@ class DateRangePicker extends React.PureComponent {
           firstDayOfWeek={firstDayOfWeek}
           weekDayFormat={weekDayFormat}
           verticalHeight={verticalHeight}
+          noBorder={noBorder}
           transitionDuration={transitionDuration}
           disabled={disabled}
           horizontalMonthPadding={horizontalMonthPadding}
@@ -557,6 +565,7 @@ class DateRangePicker extends React.PureComponent {
             type="button"
             onClick={this.onOutsideClick}
             aria-label={phrases.closeDatePicker}
+            tabIndex="-1"
           >
             {closeIcon}
           </button>
@@ -573,10 +582,12 @@ class DateRangePicker extends React.PureComponent {
       startDateId,
       startDatePlaceholderText,
       startDateAriaLabel,
+      startDateTitleText,
       endDate,
       endDateId,
       endDatePlaceholderText,
       endDateAriaLabel,
+      endDateTitleText,
       focusedInput,
       screenReaderInputMessage,
       showClearDates,
@@ -588,6 +599,7 @@ class DateRangePicker extends React.PureComponent {
       disabled,
       required,
       readOnly,
+      autoComplete,
       openDirection,
       phrases,
       isOutsideRange,
@@ -606,6 +618,7 @@ class DateRangePicker extends React.PureComponent {
       verticalSpacing,
       small,
       regular,
+      css,
       styles,
     } = this.props;
 
@@ -622,11 +635,13 @@ class DateRangePicker extends React.PureComponent {
         startDatePlaceholderText={startDatePlaceholderText}
         isStartDateFocused={focusedInput === START_DATE}
         startDateAriaLabel={startDateAriaLabel}
+        startDateTitleText={startDateTitleText}
         endDate={endDate}
         endDateId={endDateId}
         endDatePlaceholderText={endDatePlaceholderText}
         isEndDateFocused={focusedInput === END_DATE}
         endDateAriaLabel={endDateAriaLabel}
+        endDateTitleText={endDateTitleText}
         displayFormat={displayFormat}
         showClearDates={showClearDates}
         showCaret={!withPortal && !withFullScreenPortal && !hideFang}
@@ -659,6 +674,7 @@ class DateRangePicker extends React.PureComponent {
         small={small}
         regular={regular}
         verticalSpacing={verticalSpacing}
+        autoComplete={autoComplete}
       >
         {this.maybeRenderDayPickerWithPortal()}
       </DateRangePickerInputController>
@@ -744,12 +760,12 @@ export default withStyles(({ reactDates: { color, zIndex } }) => ({
     zIndex: zIndex + 2,
 
     ':hover': {
-      color: `darken(${color.core.grayLighter}, 10%)`,
+      color: darken(color.core.grayLighter, 0.1),
       textDecoration: 'none',
     },
 
     ':focus': {
-      color: `darken(${color.core.grayLighter}, 10%)`,
+      color: darken(color.core.grayLighter, 0.1),
       textDecoration: 'none',
     },
   },

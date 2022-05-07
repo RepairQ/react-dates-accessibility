@@ -25,6 +25,7 @@ export default {
   id: PropTypes.string.isRequired,
   placeholder: PropTypes.string,
   ariaLabel: PropTypes.string,
+  titleText: PropTypes.string,
   disabled: PropTypes.bool,
   required: PropTypes.bool,
   readOnly: PropTypes.bool,
@@ -40,6 +41,7 @@ export default {
   regular: PropTypes.bool,
   verticalSpacing: nonNegativeInteger,
   keepFocusOnInput: PropTypes.bool,
+  autoComplete: PropTypes.string,
 
   // calendar presentation and interaction related props
   renderMonthText: mutuallyExclusiveProps(PropTypes.func, 'renderMonthText', 'renderMonthElement'),

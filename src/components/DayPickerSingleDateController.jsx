@@ -34,12 +34,18 @@ import {
 import DayPicker from './DayPicker';
 import getPooledMoment from '../utils/getPooledMoment';
 
+// Default value of the date property. Represents the state
+// when there is no date selected.
+// TODO: use null
+const DATE_UNSET_VALUE = undefined;
+
 const propTypes = forbidExtraProps({
   date: momentPropTypes.momentObj,
   minDate: momentPropTypes.momentObj,
   maxDate: momentPropTypes.momentObj,
   onDateChange: PropTypes.func,
 
+  allowUnselect: PropTypes.bool,
   focused: PropTypes.bool,
   onFocusChange: PropTypes.func,
   onClose: PropTypes.func,
@@ -103,11 +109,12 @@ const propTypes = forbidExtraProps({
 });
 
 const defaultProps = {
-  date: undefined, // TODO: use null
+  date: DATE_UNSET_VALUE,
   minDate: null,
   maxDate: null,
   onDateChange() {},
 
+  allowUnselect: false,
   focused: false,
   onFocusChange() {},
   onClose() {},
@@ -263,6 +270,7 @@ export default class DayPickerSingleDateController extends React.PureComponent {
     const recomputePropModifiers = (
       recomputeOutsideRange || recomputeDayBlocked || recomputeDayHighlighted
     );
+    const { currentMonth: prevCurrentMonth } = this.state;
 
     if (
       numberOfMonths !== prevNumberOfMonths
@@ -271,6 +279,11 @@ export default class DayPickerSingleDateController extends React.PureComponent {
         initialVisibleMonth !== prevInitialVisibleMonth
         && !prevFocused
         && focused
+      )
+      || (
+        prevDate
+        && prevDate.diff(date)
+        && !isDayVisible(date, prevCurrentMonth, numberOfMonths)
       )
     ) {
       const newMonthState = this.getStateForNewMonth(nextProps);
@@ -354,16 +367,19 @@ export default class DayPickerSingleDateController extends React.PureComponent {
     if (e) e.preventDefault();
     if (this.isBlocked(day)) return;
     const {
+      allowUnselect,
       onDateChange,
       keepOpenOnDateSelect,
       onFocusChange,
       onClose,
     } = this.props;
 
-    onDateChange(day);
+    const clickedDay = allowUnselect && this.isSelected(day) ? DATE_UNSET_VALUE : day;
+
+    onDateChange(clickedDay);
     if (!keepOpenOnDateSelect) {
       onFocusChange({ focused: false });
-      onClose({ date: day });
+      onClose({ date: clickedDay });
     }
   }
 
@@ -515,9 +531,7 @@ export default class DayPickerSingleDateController extends React.PureComponent {
     const { currentMonth, visibleDays } = this.state;
 
     const firstPreviousMonth = currentMonth.clone().subtract(numberOfMonths, 'month');
-    const newVisibleDays = getVisibleDays(
-      firstPreviousMonth, numberOfMonths, enableOutsideDays, true,
-    );
+    const newVisibleDays = getVisibleDays(firstPreviousMonth, numberOfMonths, enableOutsideDays, true);
 
     this.setState({
       currentMonth: firstPreviousMonth.clone(),
@@ -528,10 +542,19 @@ export default class DayPickerSingleDateController extends React.PureComponent {
     });
   }
 
+  getFirstDayOfWeek() {
+    const { firstDayOfWeek } = this.props;
+    if (firstDayOfWeek == null) {
+      return moment.localeData().firstDayOfWeek();
+    }
+
+    return firstDayOfWeek;
+  }
+
   getFirstFocusableDay(newMonth) {
     const { date, numberOfMonths } = this.props;
 
-    let focusedDate = newMonth.clone().startOf('month');
+    let focusedDate = newMonth.clone().startOf('month').hour(12);
     if (date) {
       focusedDate = date.clone();
     }
@@ -629,13 +652,11 @@ export default class DayPickerSingleDateController extends React.PureComponent {
   }
 
   isFirstDayOfWeek(day) {
-    const { firstDayOfWeek } = this.props;
-    return day.day() === (firstDayOfWeek || moment.localeData().firstDayOfWeek());
+    return day.day() === this.getFirstDayOfWeek();
   }
 
   isLastDayOfWeek(day) {
-    const { firstDayOfWeek } = this.props;
-    return day.day() === ((firstDayOfWeek || moment.localeData().firstDayOfWeek()) + 6) % 7;
+    return day.day() === (this.getFirstDayOfWeek() + 6) % 7;
   }
 
   render() {

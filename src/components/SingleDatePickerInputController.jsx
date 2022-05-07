@@ -36,6 +36,8 @@ const propTypes = forbidExtraProps({
   id: PropTypes.string.isRequired,
   placeholder: PropTypes.string,
   ariaLabel: PropTypes.string,
+  autoComplete: PropTypes.string,
+  titleText: PropTypes.string,
   screenReaderMessage: PropTypes.string,
   showClearDate: PropTypes.bool,
   showCaret: PropTypes.bool,
@@ -81,6 +83,8 @@ const defaultProps = {
 
   placeholder: '',
   ariaLabel: undefined,
+  autoComplete: 'off',
+  titleText: undefined,
   screenReaderMessage: 'Date',
   showClearDate: false,
   showCaret: false,
@@ -151,7 +155,6 @@ export default class SingleDatePickerInputController extends React.PureComponent
     }
   }
 
-
   onFocus() {
     const {
       onFocusChange,
@@ -203,6 +206,8 @@ export default class SingleDatePickerInputController extends React.PureComponent
       id,
       placeholder,
       ariaLabel,
+      autoComplete,
+      titleText,
       disabled,
       focused,
       isFocused,
@@ -235,6 +240,8 @@ export default class SingleDatePickerInputController extends React.PureComponent
         id={id}
         placeholder={placeholder}
         ariaLabel={ariaLabel}
+        autoComplete={autoComplete}
+        titleText={titleText}
         focused={focused}
         isFocused={isFocused}
         disabled={disabled}

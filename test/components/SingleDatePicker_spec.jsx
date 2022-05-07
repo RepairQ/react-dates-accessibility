@@ -9,7 +9,7 @@ import DayPickerSingleDateController from '../../src/components/DayPickerSingleD
 import SingleDatePickerInputController from '../../src/components/SingleDatePickerInputController';
 import SingleDatePicker, { PureSingleDatePicker } from '../../src/components/SingleDatePicker';
 
-const describeIfWindow = typeof document === 'undefined' ? describe.skip : describe;
+import describeIfWindow from '../_helpers/describeIfWindow';
 
 describe('SingleDatePicker', () => {
   afterEach(() => {
@@ -375,7 +375,6 @@ describe('SingleDatePicker', () => {
       wrapper.instance().onInputFocus({ focused: true });
       expect(onDayPickerFocusSpy.callCount).to.equal(1);
     });
-
 
     it('calls onDayPickerFocus if readOnly and keepFocusOnInput', () => {
       const wrapper = shallow((

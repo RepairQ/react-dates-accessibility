@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { forbidExtraProps, mutuallyExclusiveProps, nonNegativeInteger } from 'airbnb-prop-types';
-import { css, withStyles, withStylesPropTypes } from 'react-with-styles';
+import { withStyles, withStylesPropTypes } from 'react-with-styles';
 
 import moment from 'moment';
 import throttle from 'lodash/throttle';
@@ -205,7 +205,7 @@ class DayPicker extends React.PureComponent {
 
     const currentMonth = props.hidden ? moment() : props.initialVisibleMonth();
 
-    let focusedDate = currentMonth.clone().startOf('month');
+    let focusedDate = currentMonth.clone().startOf('month').hour(12);
     if (props.getFirstFocusableDay) {
       focusedDate = props.getFirstFocusableDay(currentMonth);
     }
@@ -303,6 +303,12 @@ class DayPicker extends React.PureComponent {
         this.setState({
           currentMonth: nextProps.initialVisibleMonth(),
         });
+      } else {
+        const { numberOfMonths } = this.props;
+        const newDate = nextProps.initialVisibleMonth();
+        if (!isDayVisible(newDate, currentMonth, numberOfMonths)) {
+          this.onMonthChange(newDate);
+        }
       }
     }
 
@@ -342,7 +348,8 @@ class DayPicker extends React.PureComponent {
       }
     }
 
-    if (renderMonthText !== prevRenderMonthText) {
+    if (renderMonthText !== null && prevRenderMonthText !== null
+        && renderMonthText(currentMonth) !== prevRenderMonthText(currentMonth)) {
       this.setState({
         monthTitleHeight: null,
       });
@@ -393,10 +400,19 @@ class DayPicker extends React.PureComponent {
       monthTitleHeight,
     } = this.state;
 
+    let shouldAdjustHeight = false;
+    if (numberOfMonths !== prevProps.numberOfMonths) {
+      this.setCalendarMonthWeeks(currentMonth);
+      shouldAdjustHeight = true;
+    }
     if (
       this.isHorizontal()
       && (orientation !== prevProps.orientation || daySize !== prevProps.daySize)
     ) {
+      shouldAdjustHeight = true;
+    }
+
+    if (shouldAdjustHeight) {
       const visibleCalendarWeeks = this.calendarMonthWeeks.slice(1, numberOfMonths + 1);
       const calendarMonthWeeksHeight = Math.max(0, ...visibleCalendarWeeks) * (daySize - 1);
       const newMonthHeight = monthTitleHeight + calendarMonthWeeksHeight + 1;
@@ -468,15 +484,16 @@ class DayPicker extends React.PureComponent {
         this.setState({ preventFocusDate: false });
         if (isRTL) {
           newFocusedDate.add(1, 'day');
+          didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         } else {
           newFocusedDate.subtract(1, 'day');
+          didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         }
-        didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         break;
       case 'Home':
         e.preventDefault();
         this.setState({ preventFocusDate: false });
-        newFocusedDate.startOf('week');
+        newFocusedDate.startOf('week').hour(12);
         didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         break;
       case 'PageUp':
@@ -497,10 +514,11 @@ class DayPicker extends React.PureComponent {
         this.setState({ preventFocusDate: false });
         if (isRTL) {
           newFocusedDate.subtract(1, 'day');
+          didTransitionMonth = this.maybeTransitionPrevMonth(newFocusedDate);
         } else {
           newFocusedDate.add(1, 'day');
+          didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         }
-        didTransitionMonth = this.maybeTransitionNextMonth(newFocusedDate);
         break;
       case 'End':
         e.preventDefault();
@@ -700,7 +718,7 @@ class DayPicker extends React.PureComponent {
     }
 
     if (newMonth && (!focusedDate || !isDayVisible(focusedDate, newMonth, numberOfMonths))) {
-      focusedDate = newMonth.clone().startOf('month');
+      focusedDate = newMonth.clone().startOf('month').hour(12);
     }
 
     return focusedDate;
@@ -982,6 +1000,7 @@ class DayPicker extends React.PureComponent {
       horizontalMonthPadding,
       orientation,
       renderWeekHeaderElement,
+      css,
       styles,
     } = this.props;
 
@@ -1068,6 +1087,7 @@ class DayPicker extends React.PureComponent {
       daySize,
       isFocused,
       isRTL,
+      css,
       styles,
       theme,
       phrases,
