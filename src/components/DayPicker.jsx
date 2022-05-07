@@ -390,6 +390,7 @@ class DayPicker extends React.PureComponent {
   }
 
   componentDidUpdate(prevProps, prevState) {
+		console.log('component updated');
     const {
       orientation, daySize, isFocused, numberOfMonths,
     } = this.props;
